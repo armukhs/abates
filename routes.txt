@@ -1,0 +1,15 @@
+/
+/org
+/mod
+/ass
+/adm
+/htmx
+
+bat.tsx bat.htmx.tsx
+====================
+/bat
+/bat/:id
+/bat/:id/peserta
+/bat/:id/asesor
+/bat/:id/prepare
+/bat/:id/deploy

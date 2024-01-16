@@ -1,0 +1,38 @@
+* {
+	padding: 0;
+	margin: 0;
+	box-sizing: border-box;
+}
+body {
+	background-color: white;
+	color: rgb(51, 65, 85);
+}
+a {
+	color: dodgerblue;
+	text-decoration: none;
+}
+a:hover {
+	text-decoration: underline;
+}
+.page {
+	margin: 0 auto;
+	padding: 0 1rem;
+	/* min-width: 360px; */
+	/* max-width: 480px; */
+	width: 480px;
+}
+#main-menu {
+	color: #ddd;
+	padding: 16px 0;
+	font-size: 0.875rem;
+	text-transform: uppercase;
+	letter-spacing: 0.75;
+	border-bottom: 1px solid #89a;
+}
+#main-menu a {
+	color: #567;
+	text-decoration: none;
+}
+#main-menu a:hover {
+	color: salmon;
+}
