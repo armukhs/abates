@@ -14,6 +14,63 @@ a {
 a:hover {
 	text-decoration: underline;
 }
+h1 {
+	font-size: 1.65rem;
+	margin: 1.5rem 0
+}
+h1 span { display: block; }
+.batch h1 .sub {
+	font-size: .75em;
+}
+button {
+	/* height: 1.5rem; */
+	/* padding: 5px .75rem; */
+	padding: .35rem.75rem;
+	font-size: 12px;
+	font-weight: 600;
+	/* margin-left: .25rem; */
+	/* margin-right: .25rem; */
+	border: 1px solid #678;
+	appearance: button;
+	outline: none;
+	position: relative;
+	background-color: #ddd;
+}
+button.small {
+	padding: .25rem .5rem;
+}
+button:disabled { border-color:#abc; background-color: #eee; }
+button:focus { border-color:dodgerblue; background-color: #fafafa; }
+button:active { background-color: #fafafa; }
+select {
+	height: 28px;
+	padding: 0 2rem 0 .5rem;
+	font-size: 0.8125rem;
+	border: 1px solid #abc;
+	border-radius: 5px;
+	appearance: none;
+}
+select:disabled { color:#123; }
+select:focus {
+	outline: none;
+	border-color: dodgerblue;
+}
+[type=text],
+[type=number],
+[type=password] {
+	height: 28px;
+	padding: 0 .5rem;
+	font-size: 0.85rem;
+	border-radius: 2px;
+	border: 1px solid #abc;
+	appearance: none;
+}
+[type=text]:focus,
+[type=number]:focus,
+[type=password]:focus {
+	outline: none;
+	border-color: dodgerblue;
+}
 .page {
 	margin: 0 auto;
 	padding: 0 1rem;
@@ -35,4 +92,39 @@ a:hover {
 }
 #main-menu a:hover {
 	color: salmon;
+}
+.batch-menu {
+	display: flex;
+	column-gap: .8rem;
+	font-size: medium;
+	color: #abc;
+	margin: 2rem 0;
+}
+.batch-menu .current {
+	color: #123;
+}
+/* BORDERS */
+.border-t {border-top: 1px solid #abc;}
+.border-r {border-right: 1px solid #abc;}
+.border-b {border-bottom: 1px solid #abc;}
+.border-l {border-left: 1px solid #abc;}
+/* HR */
+hr {
+	appearance: none;
+	outline: none;
+	height: 0;
+	border-width: 0;
+	border-bottom: 1px solid #abc;
+}
+/* DEFAULT TABLE */
+table {
+	width: 100%;
+	border-spacing: 0;
+	border-collapse: collapse;
+}
+td {
+	padding: .5rem 0;
+}
+.wide-pad td {
+	padding: .5rem 0;
 }

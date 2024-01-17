@@ -101,10 +101,10 @@ type VGroup = Group & {
   slot2: string|null;
   slot3: string|null;
   slot4: string|null;
-  pself: number;
-  pcase: number;
-  pf2f: number;
-  plgd: number;
+  self_pos: number;
+  case_pos: number;
+  f2f_pos: number;
+  lgd_pos: number;
 }
 type Grouping = {
   batch_id: number;
@@ -138,7 +138,7 @@ type VPerson = Person & {
   slot3: string|null;
   slot4: string|null;
 }
-type ExpertReqs = {
+type SlotsAlloc = { // SlotsAlloc
   batch_id: number;
   lgd_slot1: number;
   lgd_slot2: number;
@@ -152,6 +152,12 @@ type ExpertReqs = {
   f2f_slot2_size: number;
   f2f_slot3_size: number;
   f2f_slot4_size: number;
+}
+type AssessorMinMax = {
+	minlgd: number;
+	minf2f: number;
+	maxlgd: number;
+	maxf2f: number;
 }
 //
 type ModulesFormBody = {

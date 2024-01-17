@@ -5,6 +5,12 @@ compatibility_date = "2023-12-18"
 [site]
 bucket = "./assets"
 
+[[d1_databases]]
+binding = "DB" # i.e. available in your Worker on env.DB
+database_name = "abates"
+database_id = "d8566a2e-835a-4034-bb0e-71339a911782"
+preview_database_id = "d8566a2e-835a-4034-bb0e-71339a911782"
+
 # Variable bindings. These are arbitrary, plaintext strings (similar to environment variables)
 # Note: Use secrets to store sensitive data.
 # Docs: https://developers.cloudflare.com/workers/platform/environment-variables

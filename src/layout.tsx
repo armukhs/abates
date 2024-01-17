@@ -15,7 +15,7 @@ export const Layout: FC = (props) => {
 				<script src="https://unpkg.com/hyperscript.org@0.9.12"></script>
 				<link href="/static/css/styles.css" rel="stylesheet" />
 			</head>
-			<body hx-ext="reset-on-success">
+			<body hx-ext="reset-on-success" class={props.class||""}>
 				<div class="page">{props.children}</div>
 				<div style="height:20rem"></div>
 				<script src="/static/js/htmx-form-reset.js"></script>
