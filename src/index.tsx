@@ -74,15 +74,23 @@ app.get("/me", async (c) => {
 
 // =============================================================
 
+/**
+ * Simple listing with:
+ * - show-hide form to add item
+ * - htmx POST with Server-Side Event (SSE)
+ * - SSE to trigger hiding form after submission
+ * - keyup event to enable/disable submit button
+ * - shared behavior on handling Escape
+ */
 app.get('/org', async (c) => {
 	const stm = `SELECT * FROM v_organizations`;
 	const rs = await c.env.DB.prepare(stm).all();
 
-	const _show = `document.getElementById('F0').style.display='none';
+	const _showForm = `document.getElementById('F0').style.display='none';
 	document.getElementById('F1').style.display='block';
 	document.getElementById('F2').focus();`;
 
-	const _hide = `document.getElementById('F2').value='';
+	const _hideForm = `document.getElementById('F2').value='';
 	document.getElementById('F1').style.display='none';
 	document.getElementById('F0').style.display='inline-block'`;
 
@@ -90,9 +98,7 @@ app.get('/org', async (c) => {
 		<Layout title="Daftar Organisasi">
 			<MainMenu />
 			<PageTitle text="Daftar Organisasi">
-				<button id="F0" onclick={_show}>
-					NEW
-				</button>
+				<button id="F0" onclick={_showForm}>NEW</button>
 			</PageTitle>
 			<div id="F1" class="border-ts" style="background:#f0f5f9;display:none;margin:1rem 0;padding:2rem 0;text-align:center">
 				<form
@@ -115,24 +121,24 @@ app.get('/org', async (c) => {
 					<button id="F3" disabled>
 						SUBMIT
 					</button>
-					<button id="F4" type="button" onclick={_hide}>
+					<button id="F4" type="button" onclick={_hideForm}>
 						X
 					</button>
 				</form>
-				{html`
-					<script>
-						document.body.addEventListener('orgAdded', function () {
-							document.getElementById('F4').click();
-						});
-						document.getElementById('F2').addEventListener('keyup', function (ev) {
-							const len = ev.target.value.length;
-							if (len > 10) document.getElementById('F3').removeAttribute('disabled');
-							else document.getElementById('F3').setAttribute('disabled', true);
-						});
-					</script>
-				`}
 			</div>
 			<OrgList orgs={rs.results as VOrganization[]} />
+			{html`
+				<script>
+					document.body.addEventListener('orgAdded', function () {
+						document.getElementById('F4').click();
+					});
+					document.getElementById('F2').addEventListener('keyup', function (ev) {
+						const len = ev.target.value.length;
+						if (len > 10) document.getElementById('F3').removeAttribute('disabled');
+						else document.getElementById('F3').setAttribute('disabled', true);
+					});
+				</script>
+			`}
 		</Layout>
 	);
 });
@@ -156,12 +162,10 @@ app.get('/org/:id', async (c) => {
 			<OrgInfo org={org} batches={batches} />
 			{html`
 				<script>
-					// HX-Trigger: {"showMessage":{"level" : "info", "message" : "Here Is A Message"}}
 					document.body.addEventListener('batch-created', function (evt) {
 						console.log('evt.detail', evt.detail);
-						if (evt.detail.batch_id) {
-							// alert(evt.detail.message);
-							document.location = '/bat' + '/' + evt.detail.batch_id;
+						if (evt.detail.location) {
+							document.location = evt.detail.location;
 						}
 					});
 				</script>
@@ -259,8 +263,57 @@ app.get('/dev', async (c) => {
 	return c.html(
 		<Layout title="Dev Page">
 			<MainMenu />
-			<h1 style="font-size:1.65rem;margin:1.5rem 0">Daftar Batch</h1>
-			<table id="org-list"><thead><tr style="font-weight:600"><td>Nama</td><td>Batch</td><td>Head</td><td>Year</td><td>...</td></tr><tr><td colspan={5} style="height:0.25rem;padding:2px 0"><hr/></td></tr></thead><tbody><tr><td><a href="/org/11">PT Agung Brajak Cunthi</a></td><td>2</td><td>28</td><td>&nbsp;2024&nbsp;</td><td><button class="btn-new-batch" hx-get="/htmx/org/11/new-batch" hx-target="closest tbody" hx-swap="outerHTML" onclick="document.querySelectorAll('.btn-new-batch').forEach(e => e.setAttribute('disabled', true))">+</button></td></tr></tbody><tbody><tr><td><a href="/org/12">PT Dinoyo Environment Futures</a></td><td>1</td><td>-</td><td>&nbsp;2024&nbsp;</td><td><button class="btn-new-batch" hx-get="/htmx/org/12/new-batch" hx-target="closest tbody" hx-swap="outerHTML" onclick="document.querySelectorAll('.btn-new-batch').forEach(e => e.setAttribute('disabled', true))">+</button></td></tr></tbody><tbody><tr><td><a href="/org/13">PT Guthe Harmoni Indonesia</a></td><td>1</td><td>-</td><td>&nbsp;2024&nbsp;</td><td><button class="btn-new-batch" hx-get="/htmx/org/13/new-batch" hx-target="closest tbody" hx-swap="outerHTML" onclick="document.querySelectorAll('.btn-new-batch').forEach(e => e.setAttribute('disabled', true))">+</button></td></tr></tbody></table>
+			<h1 style="font-size:1.65rem;margin:1.5rem 0">Desain Tabel</h1>
+			<table>
+				<thead>
+					<tr>
+						<td>Kolom 1</td>
+						<td>Kolom 2</td>
+						<td>Kolom 3</td>
+					</tr>
+					<TRHR colspan={3} />
+				</thead>
+				<tbody>
+					<tr>
+						<td>Row 1 Kolom 1</td>
+						<td>Row 1 Kolom 2</td>
+						<td>Row 1 Kolom 3</td>
+					</tr>
+					<tr>
+						<td>Row 2 Kolom 1</td>
+						<td>Row 2 Kolom 2</td>
+						<td>Row 2 Kolom 3</td>
+					</tr>
+					<tr>
+						<td>Row 3 Kolom 1</td>
+						<td>Row 3 Kolom 2</td>
+						<td>Row 3 Kolom 3</td>
+					</tr>
+					<TRHR colspan={3} />
+					<tr>
+						<td style="padding:.25rem 0">
+							<input type="text" />
+						</td>
+						<td style="padding:.25rem 0">
+							<button>BUTTON</button>
+						</td>
+						<td style="padding:.25rem 0">
+							<button class="micro">BUTTON</button>
+						</td>
+					</tr>
+					<tr>
+						<td style="padding:.25rem 0">
+							<input type="text" />
+						</td>
+						<td style="padding:.25rem 0">
+							<button>BUTTON</button>
+						</td>
+						<td style="padding:.25rem 0">
+							<button class="micro">BUTTON</button>
+						</td>
+					</tr>
+				</tbody>
+			</table>
 		</Layout>
 	);
 });

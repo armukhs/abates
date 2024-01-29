@@ -68,11 +68,11 @@ export async function updateBatch(c: Context<{ Bindings: Env }>) {
 	const stm0 = `UPDATE batches SET date=?, mode=?, split=?, on_self=?, on_case=?, on_f2f=?, on_lgd=? WHERE id=?`;
 	const stm1 = `SELECT * FROM v_batches WHERE id=?`;
 	const rs = await c.env.DB.batch([
-		c.env.DB.prepare(stm0).bind(date, mode, split, onSelf, onCase, onF2f, onGroup, id),
-		c.env.DB.prepare(stm1).bind(id),
+		/* 0 */ c.env.DB.prepare(stm0).bind(date, mode, split, onSelf, onCase, onF2f, onGroup, id),
+		/* 1 */ c.env.DB.prepare(stm1).bind(id),
 	]);
 	if (rs[1].results.length == 0) return null;
-	return rs[1].results[0]; // as VBatch;
+	return rs[1].results[0] as VBatch;
 }
 
 export async function regroupBatch(db: D1Database, batch: VBatch) {
@@ -142,7 +142,11 @@ export async function regroupBatch(db: D1Database, batch: VBatch) {
 	const stm2 = `INSERT INTO groups (id, batch_id, name, slot_id) VALUES ${groupValues}`;
 	const stm3 = `INSERT INTO groupings (batch_id, group_id, person_id) VALUES ${groupingValues}`;
 	const stm4 = `SELECT * FROM v_groups WHERE batch_id=?`;
-	const rsx = await db.batch([db.prepare(stm2), db.prepare(stm3), db.prepare(stm4).bind(batch.id)]);
+	const rsx = await db.batch([
+		/* 0 */ db.prepare(stm2),
+		/* 1 */ db.prepare(stm3),
+		/* 2 */ db.prepare(stm4).bind(batch.id)
+	]);
 
 	// Return groups
 	return rsx[2].results as VGroup[];

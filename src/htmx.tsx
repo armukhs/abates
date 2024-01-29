@@ -1,4 +1,5 @@
 import { Hono } from 'hono';
+import { AllocationRow } from './bat.components';
 
 const htmx = new Hono<{ Bindings: Env }>();
 
@@ -40,8 +41,27 @@ htmx.post('/new-batch', async (c) => {
 	console.log(res[0]);
 	console.log(res[1]);
 	// HX-Trigger: {"showMessage":{"level" : "info", "message" : "Here Is A Message"}}
-	c.res.headers.append('HX-Trigger', `{"batch-created":{"batch_id" : ${batch.id}}}`);
+	// c.res.headers.append('HX-Trigger', `{"batch-created":{"batch_id" : ${batch.id}}}`);
+	c.res.headers.append('HX-Trigger', `{"batch-created":{"location" : "/bat/${batch.id}"}}`);
 	return c.body('');
+});
+
+htmx.post('/assessor/:ass_id/:batch_id/:type', async (c) => {
+	// const { ass_id, batch_id, type } = c.req.param();
+	const ass_id = c.req.param('ass_id');
+	const batch_id = c.req.param('batch_id');
+	const type = c.req.param('type');
+	console.log('POST', batch_id, ass_id, type);
+	const stm0 = `INSERT INTO batch_assessors (batch_id,ass_id,type) VALUES (?,?,?)`;
+	const stm1 = `SELECT * FROM v_batch_assessors WHERE batch_id=? AND ass_id=? AND type=?`;
+	console.log(stm1);
+	const rs = await c.env.DB.batch([
+		/* 0 */ c.env.DB.prepare(stm0).bind(batch_id, ass_id, type),
+		/* 1 */ c.env.DB.prepare(stm1).bind(batch_id, ass_id, type),
+	]);
+	const found = rs[1].results[0] as VBatchAssessor;
+	console.log('FOUND', found);
+	return c.html(<AllocationRow assessor={found} />);
 });
 
 export { htmx };

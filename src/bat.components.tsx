@@ -1,5 +1,5 @@
 import { html } from "hono/html";
-import { TRHR } from "./components";
+import { IconPerson, TRHR } from "./components";
 import { getAssessorReqs } from "./bat-utils";
 
 export const BatchHero = (props: { batch: VBatch }) => {
@@ -14,7 +14,7 @@ export const BatchHero = (props: { batch: VBatch }) => {
 					viewBox="0 0 24 24"
 					strokeWidth={1.5}
 					stroke="currentColor"
-					style="display:inline-block;width:24px;height:24px;margin-top:-2px"
+					style="display:inline-block;width:22px;height:22px;margin-top:-2px"
 				>
 					<path
 						strokeLinecap="round"
@@ -65,7 +65,8 @@ export const BatchSettings = (props: { batch: VBatch }) => {
 					id="btn-edit"
 					class="small"
 					type="button"
-					hx-get={`/htmx/bat/${batch.id}/form`}
+					__hx-get={`/htmx/bat/${batch.id}/form`}
+					hx-get={`/htmx/bat/${batch.id}?form`}
 					hx-target="#batch-settings"
 					hx-swap="outerHTML"
 				>
@@ -143,7 +144,8 @@ export const FormBatchSettings = (props: { batch: VBatch; tools: Tools[] }) => {
 	};
 	return (
 		<div id="batch-settings" style="">
-			<form hx-put="/htmx/bat" hx-target="#batch-geist" hx-swap="outerHTML">
+			{/* <form hx-put="/htmx/bat" hx-target="#batch-geist" hx-swap="outerHTML"> */}
+			<form hx-put={`/htmx/bat/${batch.id}`} hx-target="#batch-geist" hx-swap="outerHTML">
 				<input id="batch-id" type="hidden" name="id" value={batch.id} />
 				<input id="batch-mode" type="hidden" name="mode" value={batch.mode || ''} />
 				<div style="display:flex;align-items:center;margin-bottom:0.5rem">
@@ -268,11 +270,14 @@ export const BatchPersons = (props: { batch: VBatch; groups: VGroup[] }) => {
 };
 
 const EmptyPersons = (props: { batch_id: number; org_id: number }) => {
+	const { batch_id, org_id } = props;
 	return (
 		<div id="batch-persons">
 			<div style="display:flex;align-items:center;margin:2.5rem 0 .5rem">
 				<h3 style="margin:0;flex-grow:1">Peserta Batch</h3>
-				<button id="btn-upload" class="small">UPLOAD DATA</button>
+				<button id="btn-upload" class="small">
+					UPLOAD DATA
+				</button>
 			</div>
 			<p id="empty" style="line-height:24px;">
 				Belum ada data peserta
@@ -280,13 +285,15 @@ const EmptyPersons = (props: { batch_id: number; org_id: number }) => {
 			{/* <form id="upload-form" hx-post="/htmx/upload" hx-target="#empty" hx-swap="outerHTML" style="display:none"> */}
 			<form
 				id="upload-form"
-				hx-post="/htmx/bat"
+				hx-post={`/htmx/bat/${batch_id}`}
 				hx-target="#batch-persons-assessors"
-				hx-swap="outerHTML" style="display:none">
+				hx-swap="outerHTML"
+				style="display:none"
+			>
 				<div style="display:flex;align-items:center;gap:.25rem">
 					<span>Jumlah sample:</span>
-					<input type="hidden" name="org_id" value={props.org_id} />
-					<input type="hidden" name="batch_id" value={props.batch_id} />
+					<input type="hidden" name="org_id" value={org_id} />
+					<input type="hidden" name="batch_id" value={batch_id} />
 					<input
 						id="samplenum"
 						type="number"
@@ -355,45 +362,52 @@ export const BatchGroups = (props: { groups: VGroup[] }) => {
 	);
 };
 
-export const BatchAssessors = (props: { batch: VBatch; alloc: SlotsAlloc|null }) => {
-	if (!props.batch.modules) return <></>;
-	if (props.batch.persons == 0) return <></>;
-	const need_assessors = props.batch.need_assessors > 0;
-	// const { minf2f, minlgd, maxf2f, maxlgd } = getAssessorReqs(props.ass_reqs);
+export const BatchRequirements = (props: { batch: VBatch; alloc: SlotsAlloc | null; title?: string; link?: boolean }) => {
+	const { batch, alloc } = props;
+	const title = props.title || "";
+
+	if (!batch.modules) return (
+		<div id="batch-assessors" style="margin:1rem 0">
+			{title.length > 0 && <h3 style="margin-bottom:0.5rem">{title}</h3>}
+			<p>Modul belum ditetapkan: belum diketahui kebutuhan asesor.</p>
+		</div>
+	);
+	if (!batch.need_assessors) return (
+		<div id="batch-assessors" style="margin:1rem 0">
+			{title.length > 0 && <h3 style="margin-bottom:0.5rem">{title}</h3>}
+			<p>Batch ini tidak membutuhkan asesor.</p>
+		</div>
+	);
+	if (batch.persons == 0) return (
+		<div id="batch-assessors" style="margin:1rem 0">
+			{title.length > 0 && <h3 style="margin-bottom:0.5rem">{title}</h3>}
+			<p>Peserta belum ditetapkan: belum diketahui kebutuhan asesor.</p>
+		</div>
+	);
+
 	return (
-		<div id="batch-assessors">
-			<h3 style="margin-bottom:0.5rem">Kebutuhan Asesor</h3>
-			{!need_assessors && <p>Batch ini tidak memerlukan asesor.</p>}
-			{need_assessors && (
-				<>
-					<ReqsTable alloc={props.alloc} />
-					<p style="margin:.5rem 0">
-						<span>Pemenuhan dan pengaturan asesor dapat </span>
-						<a style="" href={`/bat/${props.batch.id}/asesor`}>
-							dilakukan di sini
-						</a>
-						.
-					</p>
-				</>
+		<div id="batch-assessors" style="margin:1rem 0">
+			{title.length > 0 && <h3 style="margin-bottom:0.5rem">{title}</h3>}
+			<ReqsTable alloc={alloc} />
+			{props.link && (
+				<p style="margin:.5rem 0">
+					<span>Pemenuhan dan pemilihan asesor dapat </span>
+					<a style="" href={`/bat/${batch.id}/asesor`}>
+						dilakukan di sini
+					</a>
+					.
+				</p>
 			)}
-			{/*  */}
 		</div>
 	);
 };
 
 export const ReqsTable = (props: { alloc: SlotsAlloc|null }) => {
-	// let minlgd = 0,
-	// 	maxlgd = 0,
-	// 	minf2f = 0,
-	// 	maxf2f = 0;
-	// if (props.req) {
-	// 	const x = getAssessorReqs(props.req);
-	// 	minlgd = x.minlgd;
-	// 	maxlgd = x.maxlgd;
-	// 	minf2f = x.minf2f;
-	// 	maxf2f = x.maxf2f;
-	// }
 	const { minf2f, minlgd, maxf2f, maxlgd } = getAssessorReqs(props.alloc||undefined);
+	const V = (props: { n: number }) => {
+		if (props.n < 1) return <td class="center">0</td>;
+		return <td class="center bold">{props.n}</td>;
+	};
 	return (
 		<table>
 			<thead>
@@ -407,14 +421,16 @@ export const ReqsTable = (props: { alloc: SlotsAlloc|null }) => {
 			<tbody>
 				<tr>
 					<td>Asesor Grup:</td>
-					<td class="center">{'' + minlgd}</td>
-					<td class="center">{'' + maxlgd}</td>
+					{/* <td class="center">{'' + minlgd}</td> */}
+					{/* <td class="center">{'' + maxlgd}</td> */}
+					<V n={minlgd} />
+					<V n={maxlgd} />
 					<td class="center">-</td>
 				</tr>
 				<tr>
 					<td>Asesor Individu:</td>
-					<td class="center">{'' + minf2f}</td>
-					<td class="center">{'' + maxf2f}</td>
+					<V n={minf2f} />
+					<V n={maxf2f} />
 					<td class="center">-</td>
 				</tr>
 				<tr>
@@ -425,5 +441,158 @@ export const ReqsTable = (props: { alloc: SlotsAlloc|null }) => {
 				</tr>
 			</tbody>
 		</table>
+	);
+};
+
+export const GroupTable = (props: { group: GroupWithMembers }) => {
+	const group = props.group;
+	return (
+		<div class="group-table">
+			<div style="display:flex;align-items:center;margin:1rem 0 .45rem">
+				<h4 style="flex-grow:1">
+					{group.name} (<IconPerson style="width:16px;height:16px" /> {group.members.length})
+				</h4>
+				<div>SLOTS</div>
+			</div>
+			<hr />
+			{group.members[0].lgd_pos > 0 && (
+				<>
+					<div style="display:flex;align-items:center;margin-top:.25rem">
+						<p style="flex-grow:1;">Asesor Grup:</p>
+						<p>{group.members[0].lgd_assessor_name || '---'}</p>
+					</div>
+					<hr style="margin-top:.25rem" />
+				</>
+			)}
+			{group.members.map((p) => (
+				<div style="display:flex;align-items:center;margin-top:.25rem">
+					<p style="flex-grow:1">{p.fullname}</p>
+					<p>{p.f2f_assessor_name||"-"}</p>
+				</div>
+			))}
+		</div>
+	);
+};
+
+export const AllocationRow = (props: { assessor: VBatchAssessor }) => {
+	const { assessor: a } = props;
+	const Av = (props: { n: number }) => {
+		return props.n == 0 || props.n == undefined ? (
+			<span style="width:15px;text-align:center">-</span>
+		) : (
+			<img src="/static/images/checked.png" style="width:15px;height:15px;margin-top:2px;opacity:0.65" />
+		);
+	};
+	return (
+		<tr class="border-b" style="border-color:#cdd">
+			<td>{a.fullname}</td>
+			<td>
+				<div style="float:right;display:flex;gap:1rem">
+					<Av n={a.slot1} />
+					<Av n={a.slot2} />
+					<Av n={a.slot3} />
+					<Av n={a.slot4} />
+					<div style="display:flex;gap:8px;padding-left:8px">
+						<button
+							class="micro"
+							hx-get={`/htmx/bat/ass/${a.ass_id}/${a.type}?batch_id=${a.batch_id}&form`}
+							hx-target="closest tr"
+							hx-swap="outerHTML"
+						>
+							✎
+						</button>
+						{` `}
+						<form hx-delete={`/htmx/bat/${a.batch_id}/assessors`} hx-target="closest tr" hx-swap="outerHTML">
+							<input type="hidden" name="ass_id" value={a.ass_id} />
+							<input type="hidden" name="type" value={a.type} />
+							<button class="micro">
+								X
+							</button>
+						</form>
+					</div>
+				</div>
+			</td>
+		</tr>
+	);
+};
+
+export const FormAllocationRow = (props: { assessor: VBatchAssessor }) => {
+	const { assessor } = props;
+	console.log(assessor)
+	const Ax = (props: { name: string; v: number }) => {
+		if (props.v == 0) return (
+				<input type="checkbox" name={props.name} />
+		);
+		return (
+				<input type="checkbox" checked name={props.name} />
+		);
+	};
+	return (
+		<tr class="border-b" style="border-color:#cdd">
+			<td>{assessor.fullname}</td>
+			<td height={36}>
+				<form
+					style="display:flex;align-items:center;gap:.975rem;float:right"
+					hx-put={`/htmx/bat/ass/${assessor.batch_id}/${assessor.ass_id}`}
+					hx-target="closest tr"
+					hx-swap="outerHTML"
+				>
+					<Ax name="slot1" v={assessor.slot1} />
+					<Ax name="slot2" v={assessor.slot2} />
+					<Ax name="slot3" v={assessor.slot3} />
+					<Ax name="slot4" v={assessor.slot4} />
+					<div style="display:flex;gap:.25rem">
+						<button class="micro">OK</button>
+						<button
+							class="micro"
+							type="button"
+							hx-get={`/htmx/bat/ass/${assessor.ass_id}/${assessor.type}?batch_id=${assessor.batch_id}`}
+							hx-target="closest tr"
+							hx-swap="outerHTML"
+						>
+							ESC
+						</button>
+					</div>
+				</form>
+			</td>
+		</tr>
+	);
+};
+
+export const AssessorAllocation = (props: { batch_id: number; type: string; minmax: Minmax; title: string; assessors: VBatchAssessor[] }) => {
+	const { batch_id, type, minmax, title, assessors } = props;
+	const parent_id = `${type}-assessors`;
+	const tray_id = `${type}-assessors-tray`;
+	const bucket_id = `${type}-assessors-bucket`;
+	const minimum = type == "lgd" ? minmax.minlgd : minmax.minf2f;
+	const maximum = type == 'lgd' ? minmax.maxlgd : minmax.maxf2f;
+	if (minimum == 0) return <></>
+	return (
+		<div id={parent_id} style="margin-top:2rem">
+			<div style="display:flex;align-items:center;margin-bottom:.5rem">
+				<h3 style="flex-grow:1">
+					{title}: {minimum} - {maximum}
+				</h3>
+			</div>
+			<table class="assessor-allocation border-t" style="border-color:#cdd">
+				<tbody id={tray_id}>
+					{assessors.map((a) => (
+						<AllocationRow assessor={a} />
+					))}
+				</tbody>
+			</table>
+			<div id={`${type}-load-bucket`} style="margin:.5rem 0;display:none">
+				<button
+					id={`btn-${type}-load-bucket`}
+					class="bucket-loader"
+					hx-get={`/htmx/bat/${batch_id}/assessors/${type}`}
+					hx-target={`#${bucket_id}`}
+					hx-swap="innerHTML"
+				>
+					LOAD BUCKET
+				</button>
+			</div>
+			<div id={bucket_id}></div>
+		</div>
 	);
 };

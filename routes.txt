@@ -13,3 +13,10 @@ bat.tsx bat.htmx.tsx
 /bat/:id/asesor
 /bat/:id/prepare
 /bat/:id/deploy
+
+/htmx/bat
+/htmx/bat/:id
+/htmx/bat/:id/asr
+/htmx/bat/:id/asr/:asid
+/htmx/bat/:id/asr/:asid
+/htmx/bat/:id/asr/:asid

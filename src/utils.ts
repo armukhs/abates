@@ -12,3 +12,21 @@ export async function getSessionUser(c: Context) {
 
 	// return null;
 }
+// groupPersons()
+export function createGroupsByName(persons: VPerson[]) {
+	// https://dev.to/phibya/methods-to-get-unique-values-from-arrays-in-javascript-and-their-performance-1da8
+	const uniqueArray = (array: string[]) => Array.from(new Set(array));
+	const group_names = uniqueArray(persons.map((p) => p.group_name));
+	const groups: GroupWithMembers[] = [];
+  let start = 1;
+  for (let i=0; i<group_names.length; i++) {
+    const members = persons.filter((p:any) => p.group_name == group_names[i]);
+    groups.push({
+      name: group_names[i],
+      members: members,
+      startBy: start,
+    })
+    start += members.length;
+  }
+	return groups;
+}

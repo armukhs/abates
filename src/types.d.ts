@@ -19,11 +19,19 @@ type Assessor = {
   username: string;
   email: string|null;
 }
-type AssessorWithSlot = Assessor & {
-  slot1: string|number;
-  slot2: string|number;
-  slot3: string|number;
-  slot4: string|number;
+type BatchAssessor = {
+	batch_id: number;
+	ass_id: number;
+	type: string;
+	slot1: number;
+	slot2: number;
+	slot3: number;
+	slot4: number;
+}
+type VBatchAssessor = BatchAssessor & {
+	fullname: string;
+	username: string;
+	email: string|null;
 }
 // Org
 type Organization = {
@@ -137,6 +145,10 @@ type VPerson = Person & {
   slot2: string|null;
   slot3: string|null;
   slot4: string|null;
+	self_pos: number,
+	case_pos: number,
+	f2f_pos: number,
+	lgd_pos: number,
 }
 type SlotsAlloc = { // SlotsAlloc
   batch_id: number;
@@ -175,4 +187,10 @@ type GroupWithMembers = {
   name: string;
   members: VPerson[];
   startBy: number;
+}
+type Minmax = {
+	minlgd: number;
+	maxlgd: number;
+	minf2f: number;
+	maxf2f: number;
 }
