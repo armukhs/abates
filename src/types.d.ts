@@ -194,3 +194,12 @@ type Minmax = {
 	minf2f: number;
 	maxf2f: number;
 }
+type TVPersonCustom = {
+	fullname: string;
+	group_id: string;
+	group_name: string;
+	f2f_ass_id: number;
+	f2f_pos: number;
+	person_id: string;
+	batch_id: string;
+}

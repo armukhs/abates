@@ -56,6 +56,7 @@ DROP TABLE IF EXISTS persons; CREATE TABLE persons (
   [batch_id] INTEGER NOT NULL,
   [fullname] TEXT NOT NULL,
   [username] TEXT NOT NULL,
+  [password] TEXT NOT NULL,
   [email] TEXT,
   UNIQUE(batch_id, email)
 );

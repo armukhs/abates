@@ -1,7 +1,9 @@
 import { Context } from "hono";
 import { randomNamesAndUsernames } from "./names";
+import { TParticipants } from "./types/participant";
+import { generateParticipantPassword, isArrayUnique } from "./utils";
 
-function groupPattern(pop:number) {
+function groupPattern(pop: number) {
 	// let n = parseInt(pop);
 	let n = Math.round(pop);
 	if (isNaN(n) || n < 1) return [];
@@ -15,7 +17,7 @@ function groupPattern(pop:number) {
 	if (n == 13) return [5, 4, 4];
 	if (n == 14) return [5, 5, 4];
 
-	let jumlahGrup = n % 20 < 5 ? Math.floor(n/5) : Math.ceil(n/5)
+	let jumlahGrup = n % 20 < 5 ? Math.floor(n / 5) : Math.ceil(n / 5)
 	let array = Array(jumlahGrup).fill(5);
 	let mod1 = n % 5;
 	let mod2 = n % 20;
@@ -23,35 +25,35 @@ function groupPattern(pop:number) {
 	let index = mod2 < 5 ? jumlahGrup - mod2 : jumlahGrup + mod1 - 5;
 	let tweak = mod2 < 5 ? 6 : 4;
 	array.fill(tweak, index);
-	return array.sort((a,b)=> b-a);
+	return array.sort((a, b) => b - a);
 }
 
-function slotGroupPattern(pop:number, permutation:number) {
-  if (![2,3,4].includes(permutation)) return [pop];
-  if (permutation == 2) {
-    const a = Math.round(pop/permutation)
-    return [a, pop-a]
-  } else {
-    const base = Math.floor(pop/permutation);
-    const remainder = pop - base*permutation;
-    const rs = Array(permutation).fill(base);
-    if (remainder) {
-      for (let i=0; i<remainder; i++) {
-        rs[i] += 1;
-      }
-    }
-    console.log("rs", rs)
-    return rs;
-  }
+function slotGroupPattern(pop: number, permutation: number) {
+	if (![2, 3, 4].includes(permutation)) return [pop];
+	if (permutation == 2) {
+		const a = Math.round(pop / permutation)
+		return [a, pop - a]
+	} else {
+		const base = Math.floor(pop / permutation);
+		const remainder = pop - base * permutation;
+		const rs = Array(permutation).fill(base);
+		if (remainder) {
+			for (let i = 0; i < remainder; i++) {
+				rs[i] += 1;
+			}
+		}
+		console.log("rs", rs)
+		return rs;
+	}
 }
 
 async function deleteGroupings(db: D1Database, batch_id: number) {
-  const stm0 = `DELETE FROM groupings WHERE batch_id=?`
-  const stm1 = `DELETE FROM groups WHERE batch_id=?`
-  return await db.batch([
-    db.prepare(stm0).bind(batch_id),
-    db.prepare(stm1).bind(batch_id),
-  ])
+	const stm0 = `DELETE FROM groupings WHERE batch_id=?`
+	const stm1 = `DELETE FROM groups WHERE batch_id=?`
+	return await db.batch([
+		db.prepare(stm0).bind(batch_id),
+		db.prepare(stm1).bind(batch_id),
+	])
 }
 
 export async function updateBatch(c: Context<{ Bindings: Env }>) {
@@ -152,19 +154,25 @@ export async function regroupBatch(db: D1Database, batch: VBatch) {
 	return rsx[2].results as VGroup[];
 }
 
-export async function createSample(db:D1Database, batch_id:number, org_id:number, num:number) {
-  const names = randomNamesAndUsernames(num).map(
-    (n, i) => `('${batch_id}-${String(i + 1).padStart(4, '0')}', ${org_id}, ${batch_id}, '${n.name}', '${n.username}')`
-  );
-  const stm0 = `INSERT INTO persons (id, org_id, batch_id, fullname, username) VALUES ${names.join(", ")}`;
-  return await db.prepare(stm0).run();
+export async function createParticipants(db: D1Database, batch_id: number, org_id: number, participants: TParticipants) {
+	const persons = participants.filter(x => !!x.name.trim()).map((n, i) => {
+		n.username = n?.username?.trim() ?? (n.name.split(" ")[0].length > 3 ? n.name.split(" ")[0] : `${n.name.split(" ")[0]}-123`)
+		n.password = n?.password ?? generateParticipantPassword()
+		return n
+	});
+	if (!isArrayUnique(persons.map(x => x.username))) throw new Error("Username harus unik")
+
+	const toSave = persons.map((n, i) => `('${batch_id}-${String(i + 1).padStart(4, '0')}', ${org_id}, ${batch_id}, '${n.name}', '${n.username}', '${n.password}')`)
+	const stm0 = `INSERT INTO persons (id, org_id, batch_id, fullname, username, password) VALUES ${toSave.join(", ")}`;
+	
+	return await db.prepare(stm0).run();
 }
 
 export function getAssessorReqs(alloc?: SlotsAlloc) {
-  if (!alloc) return { minlgd: 0, maxlgd: 0, minf2f: 0, maxf2f: 0 }
-  const minlgd = !alloc ? 0 : Math.max(alloc.lgd_slot1, alloc.lgd_slot2, alloc.lgd_slot3, alloc.lgd_slot4);
-  const maxlgd = !alloc ? 0 : [alloc.lgd_slot1, alloc.lgd_slot2, alloc.lgd_slot3, alloc.lgd_slot4].reduce((a,o)=>{return a+o},0);
-  const minf2f = !alloc ? 0 : Math.max(alloc.f2f_slot1_size, alloc.f2f_slot2_size, alloc.f2f_slot3_size, alloc.f2f_slot4_size);
-  const maxf2f = !alloc ? 0 : [alloc.f2f_slot1_size, alloc.f2f_slot2_size, alloc.f2f_slot3_size, alloc.f2f_slot4_size].reduce((a, o) => { return a + o; }, 0);
-  return { minlgd, maxlgd, minf2f, maxf2f }
+	if (!alloc) return { minlgd: 0, maxlgd: 0, minf2f: 0, maxf2f: 0 }
+	const minlgd = !alloc ? 0 : Math.max(alloc.lgd_slot1, alloc.lgd_slot2, alloc.lgd_slot3, alloc.lgd_slot4);
+	const maxlgd = !alloc ? 0 : [alloc.lgd_slot1, alloc.lgd_slot2, alloc.lgd_slot3, alloc.lgd_slot4].reduce((a, o) => { return a + o }, 0);
+	const minf2f = !alloc ? 0 : Math.max(alloc.f2f_slot1_size, alloc.f2f_slot2_size, alloc.f2f_slot3_size, alloc.f2f_slot4_size);
+	const maxf2f = !alloc ? 0 : [alloc.f2f_slot1_size, alloc.f2f_slot2_size, alloc.f2f_slot3_size, alloc.f2f_slot4_size].reduce((a, o) => { return a + o; }, 0);
+	return { minlgd, maxlgd, minf2f, maxf2f }
 }

@@ -5,56 +5,32 @@ compatibility_date = "2023-12-18"
 [site]
 bucket = "./assets"
 
-[[d1_databases]]
+[env.development]
+IS_PROD = false
+
+[env.production]
+IS_PROD = true
+
+[[env.production.d1_databases]]
 binding = "DB" # i.e. available in your Worker on env.DB
-database_name = "abates"
-database_id = "d8566a2e-835a-4034-bb0e-71339a911782"
-preview_database_id = "d8566a2e-835a-4034-bb0e-71339a911782"
+database_name = "abates-prod"
+database_id = "5a5b7d01-dbdf-469a-b7a5-450e4926040e"
 
-# Variable bindings. These are arbitrary, plaintext strings (similar to environment variables)
-# Note: Use secrets to store sensitive data.
-# Docs: https://developers.cloudflare.com/workers/platform/environment-variables
-# [vars]
-# MY_VARIABLE = "production_value"
+[[env.development.d1_databases]]
+binding = "DB" # i.e. available in your Worker on env.DB
+database_name = "abates-dev"
+database_id = "64bb1b33-e9df-4b20-890a-8b7ce07eae1d"
 
-# Bind a KV Namespace. Use KV as persistent storage for small key-value pairs.
-# Docs: https://developers.cloudflare.com/workers/runtime-apis/kv
-# [[kv_namespaces]]
-# binding = "MY_KV_NAMESPACE"
-# id = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+[env.development.vars]
+COOKIE_NAME = "aces-auth"
+CUSTOM_HEADER = "x-aces-auth"
+API_KEY = "60173312-4e84-402f-98b4-ef01ceda1f7a"
+COGNITIVE_KEYS = "Fe26.2*1*7cdc878167941fa23b2a828747b124860215922d9ec8d29e46fa2c84697d4fef*fqMrzitr5om4_qhE8Yf84w*XkA6-JilKNrRxv_1OuEjZpDJwAp_PORsY5wSeIZM3G9GwFLpgSpOFo3IDaQZ-6YTu7RkJmzPCsa8wrO_nnIPo44GEElxzjTbQ1FtpoJQrJtVf6w8YGceQzPBUGgDbqYqzIDP5QV3m8ZQhzz7wzreBMyYk9I6oNkczIsLLVnhjRAx8ZUESlK18ePIWsl5qqVF4r3g3tTQ68CHtINLpQF5jWEJFIpL3BEebyHaLHLL8HS09xW33xh5NCE3FsP4ZBFUmMQjMialKS8ZwFFVBUeEexbXahDvOjR2QnScDSXAnTXQALe_T8AmmUGYjIRMbyVyReieHM0B9cKXOg3prL3EUfl_P9rkXESudFTNow2ydsyPrx0nFoykjwNgVGWCkrWWrER4CUmI1ViALKTSRaVQ0HDpY9UnzhqTj7VFYNSZT8TKnz1SpXaCpKIqxb7LClkh*1686163853462*37e1513366e798e3bb589940f234b5dd55d058bc0b0d49fed5dc541ccbb13741*yNxL7zRXY8SnCXhugPaWXUfkxwrvew94NwQyMdTPo4I~2"
+COOKIE_PASSWORD = "PJhb_GceyJ0-c0db97eXAiOiJ-KV1Q-LiOiJIU/zI1NiJ9="
 
-# Bind an R2 Bucket. Use R2 to store arbitrarily large blobs of data, such as files.
-# Docs: https://developers.cloudflare.com/r2/api/workers/workers-api-usage/
-# [[r2_buckets]]
-# binding = "MY_BUCKET"
-# bucket_name = "my-bucket"
-
-# Bind a Queue producer. Use this binding to schedule an arbitrary task that may be processed later by a Queue consumer.
-# Docs: https://developers.cloudflare.com/queues/get-started
-# [[queues.producers]]
-# binding = "MY_QUEUE"
-# queue = "my-queue"
-
-# Bind a Queue consumer. Queue Consumers can retrieve tasks scheduled by Producers to act on them.
-# Docs: https://developers.cloudflare.com/queues/get-started
-# [[queues.consumers]]
-# queue = "my-queue"
-
-# Bind another Worker service. Use this binding to call another Worker without network overhead.
-# Docs: https://developers.cloudflare.com/workers/platform/services
-# [[services]]
-# binding = "MY_SERVICE"
-# service = "my-service"
-
-# Bind a Durable Object. Durable objects are a scale-to-zero compute primitive based on the actor model.
-# Durable Objects can live for as long as needed. Use these when you need a long-running "server", such as in realtime apps.
-# Docs: https://developers.cloudflare.com/workers/runtime-apis/durable-objects
-# [[durable_objects.bindings]]
-# name = "MY_DURABLE_OBJECT"
-# class_name = "MyDurableObject"
-
-# Durable Object migrations.
-# Docs: https://developers.cloudflare.com/workers/learning/using-durable-objects#configure-durable-object-classes-with-migrations
-# [[migrations]]
-# tag = "v1"
-# new_classes = ["MyDurableObject"]
+[env.production.vars]
+COOKIE_NAME = "aces-auth"
+CUSTOM_HEADER = "x-aces-auth"
+API_KEY = "60173312-4e84-402f-98b4-ef01ceda1f7a"
+COGNITIVE_KEYS = "Fe26.2*1*7cdc878167941fa23b2a828747b124860215922d9ec8d29e46fa2c84697d4fef*fqMrzitr5om4_qhE8Yf84w*XkA6-JilKNrRxv_1OuEjZpDJwAp_PORsY5wSeIZM3G9GwFLpgSpOFo3IDaQZ-6YTu7RkJmzPCsa8wrO_nnIPo44GEElxzjTbQ1FtpoJQrJtVf6w8YGceQzPBUGgDbqYqzIDP5QV3m8ZQhzz7wzreBMyYk9I6oNkczIsLLVnhjRAx8ZUESlK18ePIWsl5qqVF4r3g3tTQ68CHtINLpQF5jWEJFIpL3BEebyHaLHLL8HS09xW33xh5NCE3FsP4ZBFUmMQjMialKS8ZwFFVBUeEexbXahDvOjR2QnScDSXAnTXQALe_T8AmmUGYjIRMbyVyReieHM0B9cKXOg3prL3EUfl_P9rkXESudFTNow2ydsyPrx0nFoykjwNgVGWCkrWWrER4CUmI1ViALKTSRaVQ0HDpY9UnzhqTj7VFYNSZT8TKnz1SpXaCpKIqxb7LClkh*1686163853462*37e1513366e798e3bb589940f234b5dd55d058bc0b0d49fed5dc541ccbb13741*yNxL7zRXY8SnCXhugPaWXUfkxwrvew94NwQyMdTPo4I~2"
+COOKIE_PASSWORD = "PJhb_GceyJ0-c0db97eXAiOiJ-KV1Q-LiOiJIU/zI1NiJ9="
