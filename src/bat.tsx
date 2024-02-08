@@ -1,10 +1,11 @@
 import { Hono } from 'hono';
 import { Layout } from './layout';
 import { MainMenu, PRE, TRHR } from './components';
-import { BatchRequirements, BatchHero, BatchMenu, BatchPersons, BatchSettings, FormBatchSettings, GroupTable, AssessorAllocation } from './bat.components';
+import { BatchRequirements, BatchHero, BatchMenu, BatchPersons, BatchSettings, FormBatchSettings, GroupTable, AssessorAllocation, PairingGroupAssessorWithParticipant, PairingF2FAssessorWithParticipant } from './bat.components';
 import { html } from 'hono/html';
 import { createGroupsByName } from './utils';
 import { getAssessorReqs } from './bat-utils';
+import { match } from 'ts-pattern'
 
 const app = new Hono<{ Bindings: Env }>();
 
@@ -26,19 +27,19 @@ app.get("/:id", async (c) => {
 	const alloc = rs[2].results[0] as SlotsAlloc;
 
 	return c.html(
-		<Layout title={`Batch #${batch.id}`} class="batch">
+		<Layout title={ `Batch #${batch.id}` } class="batch">
 			<MainMenu />
-			<BatchHero batch={batch} />
-			<BatchMenu batch_id={batch.id} current="" />
+			<BatchHero batch={ batch } />
+			<BatchMenu batch_id={ batch.id } current="" />
 			<div id="batch-geist">
-				<BatchSettings batch={batch} />
+				<BatchSettings batch={ batch } />
 				<div id="batch-persons-assessors" style="margin-top:2rem">
-					<BatchPersons batch={batch} groups={groups} />
-					<BatchRequirements title="Kebutuhan Asesor" batch={batch} alloc={alloc} link={true} />
+					<BatchPersons batch={ batch } groups={ groups } />
+					<BatchRequirements title="Kebutuhan Asesor" batch={ batch } alloc={ alloc } link={ true } />
 				</div>
 			</div>
 			<script src="/static/js/batch-settings.js"></script>
-			{html`
+			{ html`
 				<script>
 					let MODLEN = ${batch.modules || 0};
 					document.body.addEventListener('batch-updated', function (evt) {
@@ -65,12 +66,12 @@ app.get('/:id/peserta', async (c) => {
 	const persons = rs[1].results as VPerson[];
 	const by_groups = createGroupsByName(persons);
 	return c.html(
-		<Layout title={`Batch #${batch.id} - Peserta`} class="batch">
+		<Layout title={ `Batch #${batch.id} - Peserta` } class="batch">
 			<MainMenu />
-			<BatchHero batch={batch} />
-			<BatchMenu batch_id={batch.id} current="peserta" />
-			{by_groups.map((group) => <GroupTable group={group} />)}
-			<pre>{JSON.stringify(by_groups[0], null, 2)}</pre>
+			<BatchHero batch={ batch } />
+			<BatchMenu batch_id={ batch.id } current="peserta" />
+			{ by_groups.map((group) => <GroupTable group={ group } />) }
+			<pre>{ JSON.stringify(by_groups[0], null, 2) }</pre>
 		</Layout>
 	);
 });
@@ -81,11 +82,13 @@ app.get('/:id/asesor', async (c) => {
 	const stm1 = `SELECT s.* FROM batches b LEFT JOIN v_slotallocs s ON b.id=s.batch_id WHERE b.id=?`;
 	const stm2 = `SELECT * FROM v_batch_assessors WHERE batch_id=?`;
 	const stm3 = `SELECT * FROM assessors`;
+	const stm4 = `SELECT * FROM v_persons WHERE batch_id=?`;
 	const rs = await c.env.DB.batch([
 		/* 0 */ c.env.DB.prepare(stm0).bind(id),
 		/* 1 */ c.env.DB.prepare(stm1).bind(id),
 		/* 2 */ c.env.DB.prepare(stm2).bind(id),
 		/* 3 */ c.env.DB.prepare(stm3),
+		/* 4 */ c.env.DB.prepare(stm4).bind(id),
 	]);
 
 	if (!rs[0].results.length) return c.notFound();
@@ -101,15 +104,16 @@ app.get('/:id/asesor', async (c) => {
 	const minmax: Minmax = getAssessorReqs(alloc);
 
 	return c.html(
-		<Layout title={`Batch #${batch.id} - Alokasi Asesor`} class="batch">
+		<Layout title={ `Batch #${batch.id} - Alokasi Asesor` } class="batch">
 			<MainMenu />
-			<BatchHero batch={batch} />
-			<BatchMenu batch_id={batch.id} current="asesor" />
-			<BatchRequirements batch={batch} alloc={alloc} />
-			{/* <PRE json={f2f_assessors} /> */}
-			<AssessorAllocation batch_id={batch.id} type="lgd" minmax={minmax} title="Asesor Grup" assessors={lgd_assessors} />
-			<AssessorAllocation batch_id={batch.id} type="f2f" minmax={minmax} title="Asesor Individu" assessors={f2f_assessors} />
-			{html`<script>
+			<BatchHero batch={ batch } />
+			<BatchMenu batch_id={ batch.id } current="asesor" />
+			<BatchRequirements batch={ batch } alloc={ alloc } />
+			{/* <PRE json={f2f_assessors} /> */ }
+			<AssessorAllocation batch_id={ batch.id } type="lgd" minmax={ minmax } title="Asesor Grup" assessors={ lgd_assessors } />
+			<AssessorAllocation batch_id={ batch.id } type="f2f" minmax={ minmax } title="Asesor Individu" assessors={ f2f_assessors } />
+			<pre>{ JSON.stringify(rs[4].results, null, 2) }</pre>
+			{ html`<script>
 				const TESTVAR = 'Badak Bercula';
 				const MIN_LGD = ${minlgd};
 				const MAX_LGD = ${maxlgd};
@@ -124,104 +128,57 @@ app.get('/:id/asesor', async (c) => {
 });
 
 app.get('/:id/preps', async (c) => {
+	function renderGroupAssessors(vGroups: VGroup[], VBatchAssessor: VBatchAssessor[]) {
+		return (
+			<>
+				<h3>Asesor LGD</h3>
+				<table>
+					<PairingGroupAssessorWithParticipant vGroups={vGroups} VBatchAssessor={VBatchAssessor} />
+				</table>
+			</>
+		)
+	}
+
+
+	function renderF2FAssessors(vPersons: TVPersonCustom[], VBatchAssessor: VBatchAssessor[]) {
+		return (
+			<>
+				<h3 style="margin-top:3rem;">Asesor F2F</h3>
+				<table>
+					<PairingF2FAssessorWithParticipant vPersons={vPersons} VBatchAssessor={VBatchAssessor} />
+				</table>
+			</>
+		)
+	}
+
 	const id = c.req.param('id');
 	const stm0 = `SELECT * FROM v_batches WHERE id=?`;
 	const stm1 = `SELECT * FROM v_groups WHERE batch_id=?`;
 	const stm2 = `SELECT * FROM v_batch_assessors WHERE type='lgd' AND batch_id=?`;
+	const stm3 = `SELECT batch_id, id as person_id, fullname, group_id, group_name, f2f_ass_id, f2f_pos FROM v_persons WHERE batch_id=?`;
+	const stm4 = `SELECT * FROM v_batch_assessors WHERE type='f2f' AND batch_id=?`;
 	const rs = await c.env.DB.batch([
 		/* 0 */ c.env.DB.prepare(stm0).bind(id),
 		/* 1 */ c.env.DB.prepare(stm1).bind(id),
 		/* 2 */ c.env.DB.prepare(stm2).bind(id),
+		/* 3 */ c.env.DB.prepare(stm3).bind(id),
+		/* 4 */ c.env.DB.prepare(stm4).bind(id),
 	]);
-	// const batch = (await c.env.DB.prepare(stm0).bind(id).first()) as VBatch;
+
 	const batch = rs[0].results[0] as VBatch;
 	if (!batch) return c.notFound();
-	const groups = rs[1].results as VGroup[];
-	const list = rs[2].results as VBatchAssessor[];
-	const groups_1 = groups.filter(g => g.lgd_pos == 1);
-	const groups_2 = groups.filter(g => g.lgd_pos == 2);
-	const groups_3 = groups.filter(g => g.lgd_pos == 3);
-	const groups_4 = groups.filter((g) => g.lgd_pos == 4);
-	const groups_by_slots = [
-		groups.filter(g => g.lgd_pos == 1),
-		groups.filter(g => g.lgd_pos == 2),
-		groups.filter(g => g.lgd_pos == 3),
-		groups.filter((g) => g.lgd_pos == 4),
-	];
-	const ass_by_slots = [
-		list.filter(a => a.slot1 == 1),
-		list.filter(a => a.slot2 == 1),
-		list.filter(a => a.slot3 == 1),
-		list.filter(a => a.slot4 == 1),
-	]
-	groups.sort((a,b)=> {return a.lgd_pos - b.lgd_pos})
-	const list1 = list.filter(a => a.slot1 == 1);
-	const list2 = list.filter(a => a.slot2 == 1);
-	const list3 = list.filter(a => a.slot3 == 1);
-	const list4 = list.filter(a => a.slot4 == 1);
-	return c.html(
-		<Layout title={`Batch #${batch.id} - Preparasi`} class="batch">
-			<MainMenu />
-			<BatchHero batch={batch} />
-			<BatchMenu batch_id={batch.id} current="preps" />
-			<h3>Asesor LGD</h3>
-			<input type="hidden" name="batch_id" value={batch.id} />
-			{groups_1.map((g) => (
-				<input type="hidden" name="gid[]" value={g.id} />
-			))}
-			<table>
-				<tbody>
-					{groups_by_slots.map((bs, i) => (
-						<>
-							<TRHR colspan={2} />
-							{bs.map((g) => (
-								<tr>
-									<td width="130">
-										Slot {g.lgd_pos} &rarr; {g.name}:
-									</td>
-									<td>
-										<form style="display:flex;align-items:center;gap:.35rem;margin:-4px 0">
-											<select name={`gslot${g.lgd_pos}`} g={g.id} style="flex-grow:1">
-												<option value="">---------</option>
-												{ass_by_slots[i].map((l) => (
-													<option value={l.ass_id}>{l.fullname}</option>
-												))}
-											</select>
-											<button style="border-radius:2px;padding-left:6px;padding-right:6px">OK</button>
-											<button type="button" style="border-radius:2px;padding-left:6px;padding-right:6px">
-												CC
-											</button>
-										</form>
-									</td>
-								</tr>
-							))}
-						</>
-					))}
-				</tbody>
-				<tbody>
-					<tr>
-						<td colspan={2}>
-							<hr />
-						</td>
-					</tr>
-					{groups_2.map((g) => (
-						<tr>
-							<td>
-								Slot {g.lgd_pos} &rarr; {g.name}:
-							</td>
-							<td>
-								<div style="display:flex;align-items:center">
-									<span style="flex-grow:1;font-weight:600">Nama Asesor Terpasang</span>
-									<button class="micro">E</button>
-								</div>
-							</td>
-						</tr>
-					))}
-				</tbody>
-			</table>
-			<button>SUBMIT</button>
 
-			<PRE json={batch} />
+	const groupAssessorsToRender = renderGroupAssessors(rs[1].results as VGroup[], rs[2].results as VBatchAssessor[]);
+	const F2FAssessorsToRender = renderF2FAssessors(rs[3].results as TVPersonCustom[], rs[4].results as VBatchAssessor[]);
+
+	return c.html(
+		<Layout title={ `Batch #${batch.id} - Preparasi` } class="batch">
+			<MainMenu />
+			<BatchHero batch={ batch } />
+			<BatchMenu batch_id={ batch.id } current="preps" />
+			{ groupAssessorsToRender }
+			{ F2FAssessorsToRender }
+			<PRE json={ rs[3].results } />
 			<script src="/static/js/preps.js"></script>
 		</Layout>
 	);
@@ -233,10 +190,10 @@ app.get('/:id/deploy', async (c) => {
 	const batch = (await c.env.DB.prepare(stm0).bind(id).first()) as VBatch;
 	if (!batch) return c.notFound();
 	return c.html(
-		<Layout title={`Batch #${batch.id} - Deployment`} class="batch">
+		<Layout title={ `Batch #${batch.id} - Deployment` } class="batch">
 			<MainMenu />
-			<BatchHero batch={batch} />
-			<BatchMenu batch_id={batch.id} current="deploy" />
+			<BatchHero batch={ batch } />
+			<BatchMenu batch_id={ batch.id } current="deploy" />
 		</Layout>
 	);
 });
