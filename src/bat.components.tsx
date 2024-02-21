@@ -6,7 +6,7 @@ import { match } from "ts-pattern";
 export const BatchHero = (props: { batch: VBatch }) => {
 	return (
 		<h1>
-			<div class="sub">BATCH { props.batch.id }</div>
+			<div class="sub" style="text-transform:capitalize;">{props.batch.name} { props.batch.id }</div>
 			<div>{ props.batch.org_name }</div>
 			<div class="sub" style="display:flex;align-items:center;gap:.5rem;">
 				<svg
@@ -515,15 +515,17 @@ export const GroupTable = (props: { group: GroupWithMembers }) => {
 	);
 };
 
+export const Av = (props: { n: number }) => {
+	return props.n == 0 || props.n == undefined ? (
+		<span style="width:15px;text-align:center">-</span>
+	) : (
+		<img src="/static/images/checked.png" style="width:15px;height:15px;margin-top:2px;opacity:0.65" />
+	);
+};
+
 export const AllocationRow = (props: { assessor: VBatchAssessor }) => {
 	const { assessor: a } = props;
-	const Av = (props: { n: number }) => {
-		return props.n == 0 || props.n == undefined ? (
-			<span style="width:15px;text-align:center">-</span>
-		) : (
-			<img src="/static/images/checked.png" style="width:15px;height:15px;margin-top:2px;opacity:0.65" />
-		);
-	};
+	
 	return (
 		<tr class="border-b" style="border-color:#cdd">
 			<td>{ a.fullname }</td>
@@ -691,18 +693,18 @@ export const PairingGroupAssessorWithParticipant = ({ vGroups, VBatchAssessor }:
 	)
 }
 
-export const PairingF2FAssessorWithParticipant = ({ vPersons, VBatchAssessor }: { vPersons: TVPersonCustom[], VBatchAssessor: VBatchAssessor[] }) => {
+export const PairingF2FAssessorWithParticipant = ({ vPersons, VBatchAssessor }: { vPersons: VPerson[], VBatchAssessor: VBatchAssessor[] }) => {
 	type TAssessorAvailability = Record<'1' | '2' | '3' | '4', Record<string, { disabled: boolean; fullname: string; ass_id: number }>>
 
-	const persons_by_group = vPersons.reduce<Record<string, TVPersonCustom[]>>((acc, curr) => {
-		if (acc[curr.group_id]) {
-			acc[curr.group_id].push(curr)
+	const persons_by_group = vPersons.reduce<Record<string, VPerson[]>>((acc, curr) => {
+		if (acc[curr.f2f_pos]) {
+			acc[curr.f2f_pos].push(curr)
 		} else {
-			acc[curr.group_id] = [curr]
+			acc[curr.f2f_pos] = [curr]
 		}
 
 		return acc
-	}, {} as Record<string, TVPersonCustom[]>)
+	}, {} as Record<string, VPerson[]>)
 
 	const assessor_by_availability = VBatchAssessor.reduce<TAssessorAvailability>((acc, curr) => {
 		const pairedParticipants = vPersons.filter(v => v.f2f_ass_id === curr.ass_id)
@@ -746,10 +748,15 @@ export const PairingF2FAssessorWithParticipant = ({ vPersons, VBatchAssessor }: 
 		<>
 			<tbody id="PairingF2FAssessorWithParticipant">
 				{
-					Object.values(persons_by_group).map((bs, i) => (
+					Object.entries(persons_by_group).map((bs, i) => (
 						<>
+							<tr colspan={ 2 }>
+								<td>
+									<strong>Sesi {bs[0]}</strong>
+								</td>
+							</tr>
 							<TRHR colspan={ 2 } />
-							{ bs.map((g) => (
+							{ bs[1].map((g) => (
 								<tr>
 									<td width="130">
 										{ g.fullname }
@@ -758,7 +765,7 @@ export const PairingF2FAssessorWithParticipant = ({ vPersons, VBatchAssessor }: 
 										<form
 											hx-swap="outerHTML"
 											hx-target="#PairingF2FAssessorWithParticipant"
-											hx-put={ `/htmx/bat/${g.batch_id}/preps/assessor-participant/f2f/${g.person_id}` }
+											hx-put={ `/htmx/bat/${g.batch_id}/preps/assessor-participant/f2f/${g.id}` }
 											style="display:flex;align-items:center;gap:.35rem;margin:-4px 0"
 										>
 											<select style="flex-grow:1" name="ass_id">

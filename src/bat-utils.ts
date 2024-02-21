@@ -161,7 +161,7 @@ export async function createParticipants(db: D1Database, batch_id: number, org_i
 		return n
 	});
 	if (!isArrayUnique(persons.map(x => x.username))) throw new Error("Username harus unik")
-
+	
 	const toSave = persons.map((n, i) => `('${batch_id}-${String(i + 1).padStart(4, '0')}', ${org_id}, ${batch_id}, '${n.name}', '${n.username}', '${n.password}')`)
 	const stm0 = `INSERT INTO persons (id, org_id, batch_id, fullname, username, password) VALUES ${toSave.join(", ")}`;
 	

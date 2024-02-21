@@ -148,7 +148,8 @@ const BatchForm = (props: { org_id: number }) => {
 	const _show = `document.getElementById('B1').style.display='none';
 	document.getElementById('F1').style.display='flex';
 	document.getElementById('F2').focus();`;
-	const _hide = `document.getElementById('F2').value='';
+	const _hide = `document.getElementById('F2').value=null;
+	document.getElementById('F3').value='';
 	document.getElementById('F1').style.display='none';
 	document.getElementById('B1').style.display='inline-block'`;
 	return (
@@ -157,13 +158,18 @@ const BatchForm = (props: { org_id: number }) => {
 				NEW BATCH
 			</button>
 			{/* new-batch */}
-			<form id="F1" style="display:none;gap:.5rem;align-items:center;justify-content:center;" hx-post="/htmx/new-batch" hx-swap="none">
+			<form id="F1" style="display:none;gap:.5rem;align-items:end;justify-content:center;" hx-post="/htmx/new-batch" hx-swap="none">
 				<input type="hidden" name="org_id" value={props.org_id} />
-				<input id="F2" type="text" name="date" placeholder="YYYY-MM-DD" />
-				<button>SUBMIT</button>
-				<button type="button" onclick={_hide}>
-					CANCEL
-				</button>
+				<div>
+					<input style="width:100%;" id="F3" type="text" name="name" placeholder="Nama Batch" />
+					<input style="width:100%;margin-top:10px;padding:5px;" id="F2" type="date" name="date" placeholder="YYYY-MM-DD" />
+				</div>
+				<div style="display:flex;">
+					<button>SUBMIT</button>
+					<button type="button" onclick={_hide} style="margin-left:10px;">
+						CANCEL
+					</button>
+				</div>
 			</form>
 		</div>
 	);
