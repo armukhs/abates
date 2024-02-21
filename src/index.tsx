@@ -24,7 +24,7 @@ app.get("/", async (c) => {
 		<Layout title="Selamat Datang">
 			<div style="width:300px;margin:0 auto">
 				<h3 style="text-align:center;margin:4rem 0 1rem">Login</h3>
-				{/* <form hx-post="/login" hx-target="closest div"> */}
+				{/* <form hx-post="/login" hx-target="closest div"> */ }
 				<form method="post" action="/" hx-target="closest div">
 					<p style="margin:.5rem 0">
 						<span style="display:inline-block;width:80px;">Username:</span>
@@ -67,7 +67,7 @@ app.get("/me", async (c) => {
 	return c.html(
 		<div>
 			<h1>HELLO USER</h1>
-			<pre>{JSON.stringify(user, null, 2)}</pre>
+			<pre>{ JSON.stringify(user, null, 2) }</pre>
 		</div>
 	)
 })
@@ -98,7 +98,7 @@ app.get('/org', async (c) => {
 		<Layout title="Daftar Organisasi">
 			<MainMenu />
 			<PageTitle text="Daftar Organisasi">
-				<button id="F0" onclick={_showForm}>NEW</button>
+				<button id="F0" onclick={ _showForm }>NEW</button>
 			</PageTitle>
 			<div id="F1" class="border-ts" style="background:#f0f5f9;display:none;margin:1rem 0;padding:2rem 0;text-align:center">
 				<form
@@ -121,13 +121,13 @@ app.get('/org', async (c) => {
 					<button id="F3" disabled>
 						SUBMIT
 					</button>
-					<button id="F4" type="button" onclick={_hideForm}>
+					<button id="F4" type="button" onclick={ _hideForm }>
 						X
 					</button>
 				</form>
 			</div>
-			<OrgList orgs={rs.results as VOrganization[]} />
-			{html`
+			<OrgList orgs={ rs.results as VOrganization[] } />
+			{ html`
 				<script>
 					document.body.addEventListener('orgAdded', function () {
 						document.getElementById('F4').click();
@@ -146,21 +146,21 @@ app.get('/org', async (c) => {
 app.get('/org/:id', async (c) => {
 	const id = c.req.param("id");
 	const stm0 = `SELECT * FROM v_organizations WHERE id=?`;
-  const stm1 = `SELECT * FROM v_batches WHERE org_id=?`
-  const rs = await c.env.DB.batch([
-    c.env.DB.prepare(stm0).bind(id),
-    c.env.DB.prepare(stm1).bind(id),
-  ])
-  const org = rs[0].results[0] as VOrganization;
-  const batches = rs[1].results as VBatch[];
-  if (!org) return c.notFound();
+	const stm1 = `SELECT * FROM v_batches WHERE org_id=?`
+	const rs = await c.env.DB.batch([
+		c.env.DB.prepare(stm0).bind(id),
+		c.env.DB.prepare(stm1).bind(id),
+	])
+	const org = rs[0].results[0] as VOrganization;
+	const batches = rs[1].results as VBatch[];
+	if (!org) return c.notFound();
 	return c.html(
-		<Layout title={org.name}>
+		<Layout title={ org.name }>
 			<MainMenu />
-			<h1>{org.name}</h1>
+			<h1>{ org.name }</h1>
 			<hr />
-			<OrgInfo org={org} batches={batches} />
-			{html`
+			<OrgInfo org={ org } batches={ batches } />
+			{ html`
 				<script>
 					document.body.addEventListener('batch-created', function (evt) {
 						console.log('evt.detail', evt.detail);
@@ -181,7 +181,7 @@ app.get('/bat', async (c) => {
 		<Layout title="Daftar Batch">
 			<MainMenu />
 			<h1>Daftar Batch</h1>
-			<BatchList batches={rs.results as VBatch[]} />
+			<BatchList batches={ rs.results as VBatch[] } />
 		</Layout>
 	);
 });
@@ -203,15 +203,15 @@ app.get('/ass', async (c) => {
 					</tr>
 				</thead>
 				<tbody>
-					<TRHR colspan={4} />
-					{(rs.results as Assessor[]).map((t) => (
+					<TRHR colspan={ 4 } />
+					{ (rs.results as Assessor[]).map((t) => (
 						<tr>
-							<td style="background:">{t.fullname}</td>
-							<td style="background:">{t.username}</td>
+							<td style="background:">{ t.fullname }</td>
+							<td style="background:">{ t.username }</td>
 							<td style="background:"> - </td>
 							<td style="background:"> - </td>
 						</tr>
-					))}
+					)) }
 				</tbody>
 			</table>
 		</Layout>
@@ -235,15 +235,15 @@ app.get('/mod', async (c) => {
 					</tr>
 				</thead>
 				<tbody>
-					<TRHR colspan={4} />
-					{(rs.results as Tools[]).map((t) => (
+					<TRHR colspan={ 4 } />
+					{ (rs.results as Tools[]).map((t) => (
 						<tr>
-							<td style="background:">{t.title}</td>
-							<td style="background:">{t.category.toUpperCase()}</td>
-							<td style="background:">{t.version}</td>
+							<td style="background:">{ t.title }</td>
+							<td style="background:">{ t.category.toUpperCase() }</td>
+							<td style="background:">{ t.version }</td>
 							<td style="background:"> - </td>
 						</tr>
-					))}
+					)) }
 				</tbody>
 			</table>
 		</Layout>
@@ -271,7 +271,7 @@ app.get('/dev', async (c) => {
 						<td>Kolom 2</td>
 						<td>Kolom 3</td>
 					</tr>
-					<TRHR colspan={3} />
+					<TRHR colspan={ 3 } />
 				</thead>
 				<tbody>
 					<tr>
@@ -289,7 +289,7 @@ app.get('/dev', async (c) => {
 						<td>Row 3 Kolom 2</td>
 						<td>Row 3 Kolom 3</td>
 					</tr>
-					<TRHR colspan={3} />
+					<TRHR colspan={ 3 } />
 					<tr>
 						<td style="padding:.25rem 0">
 							<input type="text" />

@@ -95,7 +95,7 @@ app.post('/:batch_id', async (c) => {
 /* ============================= */
 
 // POST /htmx/bat/:batch_id/assessors
-app.post('/:batch_id/assessors', async (c) => {
+app.post('/:batch_id/assessors/:type', async (c) => {
 	async function getGroupingsToUpdate(batch_id: string) {
 		return (await c.env.DB.batch(Array.from({ length: 4 }).map((_, i) => {
 			const stm = `SELECT group_id, person_id FROM v_groupings WHERE batch_id = ? AND f2f_pos = ? AND  f2f_ass_id IS NULL LIMIT 1`
@@ -116,7 +116,7 @@ app.post('/:batch_id/assessors', async (c) => {
 	const body = await c.req.parseBody();
 	const type = body.type as string;
 	const ass_id = parseInt(body.ass_id as string);
-	const groupingsToUpdate = await getGroupingsToUpdate(batch_id)
+	const groupingsToUpdate: any[] = type !== 'lgd' ? (await getGroupingsToUpdate(batch_id)) : []
 
 	const stm0 = `INSERT INTO batch_assessors (batch_id,ass_id,type) VALUES (?,?,?)`;
 	const stm1 = `SELECT * FROM v_batch_assessors WHERE batch_id=? AND ass_id=? AND type=?`;
@@ -185,7 +185,7 @@ app.get("/:batch_id/assessors/:type", async (c) => {
 		<div>
 			<div style={ s1 }>
 				{ assessors.map((a) => (
-					<form hx-post={ `/htmx/bat/${id}/assessors` } hx-target={ `#${type}-assessors-tray` } hx-swap="beforeend">
+					<form hx-post={ `/htmx/bat/${id}/assessors/${type}` } hx-target={ `#${type}-assessors-tray` } hx-swap="beforeend">
 						<input type="hidden" name="type" value={ type } />
 						<input type="hidden" name="ass_id" value={ a.id } />
 						<p class="bucket-item" id={ `A-${a.id}` } ass_id={ a.id } style="cursor:default">
@@ -285,7 +285,7 @@ app.put('/ass/:batch_id/:ass_id', async (c) => {
 		for (let i = 0; i < vAll.length; i++) {
 			if (vAll[i] === 0) {
 				const c = y[`${i + 1}`]
-				if(c) {
+				if (c) {
 					c.f2f_ass_id = null
 					toNull.push(c)
 					delete y[`${i + 1}`]
@@ -305,7 +305,7 @@ app.put('/ass/:batch_id/:ass_id', async (c) => {
 
 		// set f2f_ass_id base on vAll
 		for (let i = 0; i < vAll.length; i++) {
-			if(y[`${i + 1}`]) {
+			if (y[`${i + 1}`]) {
 				if (vAll[i] === 1) {
 					y[`${i + 1}`].f2f_ass_id = ass_id
 				} else {
@@ -333,7 +333,7 @@ app.put('/ass/:batch_id/:ass_id', async (c) => {
 	const stm0 = `UPDATE batch_assessors SET slot1=?, slot2=?, slot3=?, slot4=? WHERE batch_id=? AND ass_id=?`;
 	await c.env.DB.batch([
 		c.env.DB.prepare(stm0).bind(v1, v2, v3, v4, batch_id, ass_id),
-		...[...toFill,...toNull].map(v => {
+		...[...toFill, ...toNull].map(v => {
 			return c.env.DB.prepare("UPDATE groupings SET f2f_ass_id = ? WHERE group_id = ? AND person_id = ? AND batch_id = ?")
 				.bind(v.f2f_ass_id, v.group_id, v.person_id, batch_id)
 		}),
@@ -379,7 +379,7 @@ app.put('/:batch_id/preps/assessor-participant/group/:group_id', async (c) => {
 	const groups = rs[0].results as VGroup[];
 	const list = rs[1].results as VBatchAssessor[];
 
-	return c.html(<PairingGroupAssessorWithParticipant vGroups={ groups } VBatchAssessor={list} />)
+	return c.html(<PairingGroupAssessorWithParticipant vGroups={ groups } VBatchAssessor={ list } />)
 })
 
 app.put('/:batch_id/preps/assessor-participant/f2f/:person_id', async (c) => {
@@ -391,15 +391,15 @@ app.put('/:batch_id/preps/assessor-participant/f2f/:person_id', async (c) => {
 	await c.env.DB.prepare(`UPDATE groupings SET f2f_ass_id = ? WHERE batch_id = ? AND person_id = ?`).bind(x?.ass_id ?? null, batchId, personId).run()
 
 	// get updated data
-	
-	const stm0 = `SELECT batch_id, id as person_id, fullname, group_id, group_name, f2f_ass_id, f2f_pos FROM v_persons WHERE batch_id=?`;
+
+	const stm0 = `SELECT * FROM v_persons WHERE batch_id=?`;
 	const stm1 = `SELECT * FROM v_batch_assessors WHERE type='f2f' AND batch_id=?`;
 	const rs = await c.env.DB.batch([
 		/* 0 */ c.env.DB.prepare(stm0).bind(batchId),
 		/* 1 */ c.env.DB.prepare(stm1).bind(batchId),
 	]);
 
-	return c.html(<PairingF2FAssessorWithParticipant vPersons={rs[0].results as TVPersonCustom[]} VBatchAssessor={rs[1].results as VBatchAssessor[]} />)
+	return c.html(<PairingF2FAssessorWithParticipant vPersons={ rs[0].results as VPerson[] } VBatchAssessor={ rs[1].results as VBatchAssessor[] } />)
 
 	// const stm0 = `SELECT * FROM v_groups WHERE batch_id=?`;
 	// const stm1 = `SELECT * FROM v_batch_assessors WHERE type='lgd' AND batch_id=?`;
@@ -423,6 +423,37 @@ app.put('/:batch_id/preps/assessor-participant/f2f/:person_id', async (c) => {
 	// ]
 
 	// return c.html(<PairingGroupAssessorWithParticipant groups_by_slots={ groups_by_slots } ass_by_slots={ ass_by_slots } />)
+})
+
+// deploy htmx routes
+// deployments
+app.put('/:batch_id/deploy/slug', async (c) => {
+	const { batch_id } = c.req.param();
+	const parsed = await c.req.parseBody()
+	if (!parsed.slug) return c.text('Bad gateway', 400)
+	const stm = 'UPDATE batches SET slug = ? WHERE id = ?'
+	await c.env.DB.prepare(stm).bind(parsed.slug, batch_id).run()
+	return c.text('Updated', 201)
+})
+
+app.put('/:batch_id/deploy/time', async (c) => {
+	const { batch_id } = c.req.param();
+	const parsed = await c.req.parseBody()
+	
+	if(Object.keys(parsed).length > 4 || Object.keys(parsed).length < 1) return c.text('Bad gateway', 400)
+	const isValid = Object.entries(parsed).reduce((acc: boolean, curr: any, i) => {
+		if(!(curr[0] === `time${i+1}` && curr[1])) {
+			acc = false
+			return acc;
+		}
+		return acc
+	}, true)
+	if(!isValid) return c.text('Bad gateway', 400)
+
+	const stm = `UPDATE batches SET ${Object.keys(parsed).map(v => `${v} = ?`).join(",")} WHERE id = ?`
+	await c.env.DB.prepare(stm).bind(...Object.values(parsed), batch_id).run()
+
+	return c.text('Updated', 201)
 })
 
 export { app };

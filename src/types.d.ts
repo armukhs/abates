@@ -80,6 +80,7 @@ type Batch = {
   time2: string|null;
   time3: string|null;
   time4: string|null;
+  slug: string;
 }
 type VBatch = Batch & {
   org_name: string;

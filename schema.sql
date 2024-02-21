@@ -48,7 +48,9 @@ DROP TABLE IF EXISTS batches; CREATE TABLE batches (
   [time1] TEXT,
   [time2] TEXT,
   [time3] TEXT,
-  [time4] TEXT
+  [time4] TEXT,
+  [slug] TEXT,
+  UNIQUE(slug)
 );
 DROP TABLE IF EXISTS persons; CREATE TABLE persons (
   [id] TEXT PRIMARY KEY,

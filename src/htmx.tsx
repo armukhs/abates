@@ -30,19 +30,22 @@ htmx.post("/new-org", async (c) => {
 })
 
 htmx.post('/new-batch', async (c) => {
-	const { org_id, date } = await c.req.parseBody();
+	const { org_id, date, name } = await c.req.parseBody();
+	console.log(name)
+	const d = date.toString().split("-");
+	const toSaveDate = `${d[0]}-${d[1]}-${d[2]}`;
 	const stm = `SELECT * FROM organizations WHERE id=?`;
 	const rs = await c.env.DB.prepare(stm).bind(org_id).first();
 	if (!rs) return c.notFound();
 	const stm0 = `INSERT INTO batches (org_id, date, name) VALUES (?,?,?)`;
 	const stm1 = `SELECT * FROM v_batches WHERE org_id=? ORDER BY id DESC LIMIT 1`;
-	const res = await c.env.DB.batch([c.env.DB.prepare(stm0).bind(org_id, date, 'BATCH'), c.env.DB.prepare(stm1).bind(org_id)]);
+	const res = await c.env.DB.batch([c.env.DB.prepare(stm0).bind(org_id, toSaveDate, name ?? 'BATCH'), c.env.DB.prepare(stm1).bind(org_id)]);
 	const batch = res[1].results[0] as Batch;
 	console.log(res[0]);
 	console.log(res[1]);
 	// HX-Trigger: {"showMessage":{"level" : "info", "message" : "Here Is A Message"}}
-	// c.res.headers.append('HX-Trigger', `{"batch-created":{"batch_id" : ${batch.id}}}`);
-	c.res.headers.append('HX-Trigger', `{"batch-created":{"location" : "/bat/${batch.id}"}}`);
+	// c.res.headers.append('HX-Trigger', JSON.stringify({ "batch-created": { "batch_id" : batch.id } }));
+	c.res.headers.append('HX-Trigger', JSON.stringify({ "batch-created": { "location" : `/bat/${batch.id}` } }));
 	return c.body('');
 });
 
